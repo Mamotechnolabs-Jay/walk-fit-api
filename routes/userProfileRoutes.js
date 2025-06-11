@@ -6,8 +6,8 @@ const { authmiddleware } = require('../middlewares/authMiddleware');
 router.post('/create', authmiddleware, profileController.createOrUpdateProfile);
 
 
-router.get('/get', authmiddleware, profileController.getProfile);
+router.get('/get', authmiddleware, profileController.getUserProfile);
 
-router.delete('/delete', authmiddleware, profileController.deleteProfile);
+router.delete('/delete', authmiddleware, profileController.deleteUserProfile);
 
 module.exports = router;

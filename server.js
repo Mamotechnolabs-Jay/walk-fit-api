@@ -5,7 +5,8 @@ const cors = require('cors');
 const morgan = require('morgan');
 const chalk = require('chalk'); 
 const authRoutes = require('./routes/authRoutes');
-const userProfileRoutes = require('./routes/userProfileRoutes'); // Import user profile routes
+const userProfileRoutes = require('./routes/userProfileRoutes'); 
+const workoutRoutes = require('./routes/workoutRoutes'); // Import workout routes
 
 const app = express();
 
@@ -44,7 +45,7 @@ morgan.token('method-colored', (req) => {
   }
 });
 
-// Request logging middleware
+// Request logging middleware 
 if (process.env.NODE_ENV !== 'production') {
 
   app.use(morgan(':method-colored :url :status-colored :response-time ms - :res[content-length]'));
@@ -55,6 +56,8 @@ if (process.env.NODE_ENV !== 'production') {
 // Routes - first import the routes and then use them
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', userProfileRoutes); // Use user profile routes
+app.use('/api/workouts', workoutRoutes); // Use workout routes
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {

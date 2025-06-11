@@ -1,6 +1,6 @@
 const UserProfile = require('../models/UserProfile');
 const User = require('../models/User');
-const workoutController = require('./workoutController');
+const workoutController = require('./WorkoutController');
 
 // Create/Update user profile
 exports.createOrUpdateProfile = async (req, res) => {

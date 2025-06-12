@@ -1,32 +1,27 @@
 const express = require('express');
-const workoutController = require('../controllers/workoutController');
-const { authmiddleware } = require('../middlewares/authMiddleware');
-
 const router = express.Router();
+const workoutController = require('../controllers/workoutController');
+const {authmiddleware} = require('../middlewares/authMiddleware');
 
-// Available workouts based on user's plan
-router.get('/available', authmiddleware, workoutController.getAvailableWorkouts);
-
-// Today's workout - must be before the /:id route
+// Get today's workout
 router.get('/today', authmiddleware, workoutController.getTodaysWorkout);
 
-// Daily workouts route
-router.get('/daily', authmiddleware, workoutController.getDailyWorkouts);
+// Get all workout categories
+router.get('/categories', authmiddleware, workoutController.getWorkoutCategories);
 
-// Individual workout by ID - must be after specific routes
+// Get workout programs within a category
+router.get('/category/:categoryId/programs', authmiddleware, workoutController.getWorkoutProgramsByCategory);
+
+// Get workouts within a program
+router.get('/program/:programId/workouts', authmiddleware, workoutController.getWorkoutsByProgram);
+
+// Get specific workout by ID
 router.get('/:id', authmiddleware, workoutController.getWorkoutById);
 
-// Workout session routes
-router.get('/sessions', authmiddleware, workoutController.getWorkoutSessions);
-router.post('/sessions/start', authmiddleware, workoutController.startWorkoutSession);
-router.put('/sessions/:id', authmiddleware, workoutController.updateWorkoutSession);
-router.put('/sessions/:id/complete', authmiddleware, workoutController.completeWorkoutSession);
+// Start a workout session
+router.post('/session/start', authmiddleware, workoutController.startWorkoutSession);
 
-// Workout schedule routes
-router.get('/schedule', authmiddleware, workoutController.getWorkoutSchedule);
-
-// Personalized plan routes
-router.post('/plan/generate', authmiddleware, workoutController.generatePersonalizedPlan);
-router.get('/plan/current', authmiddleware, workoutController.getCurrentPlan);
+// Complete a workout session
+router.put('/session/:id/complete', authmiddleware, workoutController.completeWorkoutSession);
 
 module.exports = router;

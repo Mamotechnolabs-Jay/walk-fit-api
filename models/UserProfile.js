@@ -46,7 +46,12 @@ const userProfileSchema = new mongoose.Schema({
   },
   energyBetweenMeals: {
     type: String,
-    enum: ['sleepy_when_hungry', 'tired_after_eating', 'feel_good'],
+    enum: [
+      'i_get_sleepy_when_i_am_hungry',
+      'i_am_tired_after_i_eat',
+      'i_feel_good',
+      'i_am_always_feeling_energized'
+    ],
     default: null
   },
   dailyWalkingTime: {
@@ -56,23 +61,35 @@ const userProfileSchema = new mongoose.Schema({
   },
   stairClimbingCapacity: {
     type: String,
-    enum: ['somewhat_out_of_breath', 'ok_after_one_flight', 'several_flights_easily'],
+    enum: [
+      'i_am_out_of_breath_so_i_could_not_talk',
+      'i_am_somewhat_out_of_breath_but_can_talk',
+      'i_am_ok_after_one_flight',
+      'i_could_do_even_several_flights_easily'
+    ],
     default: null
   },
   focusAreas: [{
     type: String,
-    enum: ['weight_loss', 'fat_burn', 'stress_reduction', 'better_shape', 
-           'back_pain_reduction', 'improve_physique', 'heart_health', 
-           'boost_energy', 'better_sleep', 'endurance', 'better_relaxation', 
-           'mobility', 'recovery', 'agility']
+    enum: ['weight_loss', 'fat_burn', 'stress_reduction', 'better_shape',
+      'back_pain_reduction', 'improve_physique', 'heart_health',
+      'boost_energy', 'better_sleep', 'endurance', 'better_relaxation',
+      'mobility', 'recovery', 'agility']
   }],
   weightGainFactors: [{
     type: String,
-    enum: ['marriage_or_relationship', 'busy_work_or_family_life', 'stress_or_mental_health', 'medicine_or_hormonal_disorder']
+    enum: ['marriage_or_relationship', 'busy_work_or_family_life', 'stress_or_mental_health', 'medicine_or_hormonal_disorder', 'None_of_the_above']
   }],
   dietaryVices: [{
     type: String,
-    enum: ['sweet_tooth', 'too_much_soda', 'midnight_snacks', 'alcohol']
+    enum: [
+      'i_have_a_sweet_tooth',
+      'i_drink_too_much_soda',
+      'i_eat_midnight_snacks',
+      'i_drink_alcohol',
+      'i_dont_sleep_enough',
+      'none_of_the_above'
+    ]
   }],
   stepGoal: {
     type: Number,
@@ -80,7 +97,12 @@ const userProfileSchema = new mongoose.Schema({
   },
   waterConsumption: {
     type: String,
-    enum: ['only_tea_and_coffee', 'fewer_than_2_glasses', '2_6_glasses', '7_10_glasses'],
+    enum: [
+      'i_only_drink_tea_and_coffee',
+      'fewer_than_2_glasses_of_water',
+      '2_6_glasses_of_water',
+      '7_10_glasses_of_water'
+    ],
     default: null
   },
   sleepDuration: {
@@ -90,7 +112,7 @@ const userProfileSchema = new mongoose.Schema({
   },
   age: {
     type: Number,
-    min: 13, 
+    min: 13,
     max: 120
   },
   currentWeight: {

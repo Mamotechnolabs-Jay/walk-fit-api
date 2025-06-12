@@ -20,6 +20,19 @@ const workoutSchema = new mongoose.Schema({
     enum: ['weight_loss', 'progression', 'challenge', 'free', 'beginner', 'intermediate', 'advanced'],
     required: true
   },
+  // New program-related fields
+  programId: {
+    type: String,
+    required: false
+  },
+  programName: {
+    type: String,
+    required: false
+  },
+  order: {
+    type: Number,
+    default: 0
+  },
   estimatedCalories: {
     type: Number,
     min: 0

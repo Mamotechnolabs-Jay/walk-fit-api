@@ -14,6 +14,13 @@ const workoutSessionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  // New program-related fields
+  programId: {
+    type: String
+  },
+  programName: {
+    type: String
+  },
   startTime: {
     type: Date,
     required: true

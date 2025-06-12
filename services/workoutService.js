@@ -43,12 +43,30 @@ class WorkoutService {
       console.log('Number of exercises received:', response.data?.length || 0);
 
       if (response.data && response.data.length > 0) {
-        // Filter for walking exercises
+        // Filter for walking exercises with stricter criteria
         const walkingExercises = response.data.filter(exercise => {
           const name = exercise.name.toLowerCase();
           const instructions = exercise.instructions.toLowerCase();
-          const isWalking = name.includes('walk') || instructions.includes('walk');
-          console.log(`Exercise "${exercise.name}" is walking:`, isWalking);
+          
+          // Check if it's explicitly a walking exercise
+          const isWalking = (
+            name.includes('walk') || 
+            name.includes('hike') ||
+            name.includes('stroll') ||
+            (instructions.includes('walk') && !instructions.includes('skate')) ||
+            (instructions.includes('hike') && !instructions.includes('bike'))
+          );
+          
+          // Log the decision for debugging
+          console.log(`Exercise "${exercise.name}" is walking:`, isWalking, {
+            name: name,
+            hasWalkInName: name.includes('walk'),
+            hasHikeInName: name.includes('hike'),
+            hasStrollInName: name.includes('stroll'),
+            hasWalkInInstructions: instructions.includes('walk'),
+            hasHikeInInstructions: instructions.includes('hike')
+          });
+          
           return isWalking;
         });
 

@@ -9,8 +9,10 @@ const UserWorkoutProgress = require('../models/UserWorkoutProgress');
 
 class WorkoutService {
   constructor() {
-    this.apiKey = process.env.NINJA_API_KEY;
+    this.apiKey = process.env.FITNESS_API_KEY;
     this.baseUrl = 'https://api.api-ninjas.com/v1';
+    console.log('WorkoutService initialized with API URL:', this.baseUrl);
+    console.log('API Key present:', !!this.apiKey);
 
     // Default category IDs
     this.categoryIds = ['weight_loss', 'progression', 'lunch_walks'];
@@ -18,8 +20,16 @@ class WorkoutService {
 
   // Fetch exercises from Ninja API
   async fetchExercisesFromNinjaAPI(params = {}) {
+    console.log('Fetching exercises from Ninja API with params:', params);
     try {
-      const response = await axios.get(`${this.baseUrl}/exercises`, {
+      const url = `${this.baseUrl}/exercises`;
+      console.log('Making API request to:', url);
+      console.log('Request headers:', {
+        'X-Api-Key': this.apiKey ? 'Present (hidden)' : 'Missing'
+      });
+      console.log('Request params:', params);
+
+      const response = await axios.get(url, {
         headers: {
           'X-Api-Key': this.apiKey
         },
@@ -29,31 +39,60 @@ class WorkoutService {
         }
       });
 
+      console.log('API Response status:', response.status);
+      console.log('Number of exercises received:', response.data?.length || 0);
+
       if (response.data && response.data.length > 0) {
         // Filter for walking exercises
         const walkingExercises = response.data.filter(exercise => {
           const name = exercise.name.toLowerCase();
           const instructions = exercise.instructions.toLowerCase();
-          return name.includes('walk') || instructions.includes('walk');
+          const isWalking = name.includes('walk') || instructions.includes('walk');
+          console.log(`Exercise "${exercise.name}" is walking:`, isWalking);
+          return isWalking;
         });
 
+        console.log('Number of walking exercises found:', walkingExercises.length);
+        
         // Return walking exercises if available, otherwise return all cardio exercises
-        return walkingExercises.length > 0 ? walkingExercises : response.data;
+        const exercisesToReturn = walkingExercises.length > 0 ? walkingExercises : response.data;
+        console.log('Final number of exercises to return:', exercisesToReturn.length);
+        
+        return exercisesToReturn;
       }
+      console.log('No exercises found in API response');
       return [];
     } catch (error) {
-      console.error('Error fetching exercises from Ninja API:', error);
+      console.error('Error fetching exercises from Ninja API:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data
+      });
       return [];
     }
   }
 
   // Create workout from exercise
   async createWorkoutFromExercise(exercise, categoryId, programId = null, programName = null, order = 1) {
+    console.log('Creating workout from exercise:', {
+      exerciseName: exercise.name,
+      categoryId,
+      programId,
+      order
+    });
+
     const duration = categoryId === 'lunch_walks' ? 15 : categoryId === 'weight_loss' ? 30 : 20;
     const calories = duration * 5;
     const distance = +(duration * 0.08).toFixed(1);
 
-    return await Workout.create({
+    console.log('Calculated workout parameters:', {
+      duration,
+      calories,
+      distance
+    });
+
+    const workout = await Workout.create({
       name: exercise.name.includes('Walk') ? exercise.name : `${exercise.name} Walking Workout`,
       description: exercise.instructions,
       type: 'walk',
@@ -67,6 +106,14 @@ class WorkoutService {
       includesWarmup: true,
       includesCooldown: true
     });
+
+    console.log('Created workout:', {
+      id: workout._id,
+      name: workout.name,
+      duration: workout.duration
+    });
+
+    return workout;
   }
 
   // Fetch workout categories from API
@@ -534,6 +581,7 @@ class WorkoutService {
 
   // Get today's workout
   async getTodaysWorkout(userId) {
+    console.log('Getting today\'s workout for user:', userId);
     try {
       // Get today's date
       const today = new Date();
@@ -545,8 +593,11 @@ class WorkoutService {
         .populate('activeSessionId')
         .populate('completedSessionId');
 
+      console.log('Existing daily workout found:', !!dailyWorkout);
+
       // If daily workout exists, return it
       if (dailyWorkout && dailyWorkout.workoutId) {
+        console.log('Returning existing daily workout');
         return dailyWorkout;
       }
 
@@ -555,8 +606,12 @@ class WorkoutService {
       try {
         // Get user profile to determine fitness level for API parameters
         const userProfile = await UserProfile.findOne({ userId });
-        let difficulty = 'beginner';
+        console.log('User profile found:', {
+          fitnessLevel: userProfile?.fitnessLevel,
+          preferredDuration: userProfile?.preferredWorkoutDuration
+        });
 
+        let difficulty = 'beginner';
         if (userProfile?.fitnessLevel) {
           if (userProfile.fitnessLevel === 'advanced') {
             difficulty = 'expert';
@@ -564,14 +619,21 @@ class WorkoutService {
             difficulty = 'intermediate';
           }
         }
+        console.log('Selected difficulty level:', difficulty);
 
         // Fetch exercises from Ninja API
         const exercises = await this.fetchExercisesFromNinjaAPI({ difficulty });
 
         if (exercises.length > 0) {
+          console.log('Successfully fetched exercises from API');
           // Select a random exercise
           const randomIndex = Math.floor(Math.random() * exercises.length);
           const selectedExercise = exercises[randomIndex];
+          console.log('Selected exercise:', {
+            name: selectedExercise.name,
+            type: selectedExercise.type,
+            difficulty: selectedExercise.difficulty
+          });
 
           // Create a workout from the selected exercise
           selectedWorkout = await this.createWorkoutFromExercise(
@@ -582,10 +644,14 @@ class WorkoutService {
             1
           );
         } else {
+          console.log('No exercises returned from API, using fallback');
           throw new Error('No exercises returned from API');
         }
       } catch (apiError) {
-        console.error('Error fetching workout from API:', apiError);
+        console.error('Error in API workflow:', {
+          message: apiError.message,
+          stack: apiError.stack
+        });
 
         // Fallback: Create a basic walking workout
         const workouts = await Workout.find({
@@ -593,7 +659,10 @@ class WorkoutService {
           name: { $regex: /walk/i }
         });
 
+        console.log('Fallback workouts found:', workouts.length);
+
         if (!workouts || workouts.length === 0) {
+          console.log('Creating default walking workout');
           selectedWorkout = new Workout({
             name: 'Daily Walking Workout',
             description: 'A simple walking workout to get you moving. Begin with a slow 2-minute warm-up. Then walk at a moderate pace that slightly elevates your heart rate but still allows you to talk comfortably. Focus on maintaining good posture with your head up and shoulders relaxed. Finish with a 2-minute cool-down at a slower pace.',
@@ -611,12 +680,17 @@ class WorkoutService {
           // Use a random walking workout from DB
           const randomIndex = Math.floor(Math.random() * workouts.length);
           selectedWorkout = workouts[randomIndex];
+          console.log('Selected fallback workout:', {
+            id: selectedWorkout._id,
+            name: selectedWorkout.name
+          });
         }
       }
 
       // Get user profile to determine step goal
       const userProfile = await UserProfile.findOne({ userId });
       const targetSteps = userProfile?.stepGoal || 5000;
+      console.log('User step goal:', targetSteps);
 
       // Create daily workout
       const newDailyWorkout = new DailyWorkout({
@@ -628,15 +702,27 @@ class WorkoutService {
         updatedAt: new Date()
       });
 
+      console.log('Creating new daily workout:', {
+        userId,
+        workoutId: selectedWorkout._id,
+        targetSteps
+      });
+
       const savedDailyWorkout = await newDailyWorkout.save();
 
       // Return with populated fields
-      return await DailyWorkout.findById(savedDailyWorkout._id)
+      const populatedWorkout = await DailyWorkout.findById(savedDailyWorkout._id)
         .populate('workoutId')
         .populate('activeSessionId')
         .populate('completedSessionId');
+
+      console.log('Returning populated daily workout');
+      return populatedWorkout;
     } catch (error) {
-      console.error('Error getting today\'s workout:', error);
+      console.error('Error in getTodaysWorkout:', {
+        message: error.message,
+        stack: error.stack
+      });
       throw error;
     }
   }

@@ -32,7 +32,7 @@ const userProfileSchema = new mongoose.Schema({
   }],
   weightHappiness: {
     type: String,
-    enum: ['less_than_year_ago', '1_to_2_years_ago', 'more_than_3_years_ago', 'happy_with_weight', 'never_thought_about_this'],
+    enum: ['less_than_a_year_ago', '1_to_2_years_ago', 'more_than_3_years_ago', 'i_am_happy_with_my_weight', 'never_thought_about_this'],
     default: null
   },
   displayName: {

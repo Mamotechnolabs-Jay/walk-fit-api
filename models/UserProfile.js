@@ -28,7 +28,7 @@ const userProfileSchema = new mongoose.Schema({
   },
   bodyPartsToToneUp: [{
     type: String,
-    enum: ['belly', 'buttocks', 'hips', 'thighs']
+    enum: ['belly', 'buttocks', 'hips', 'thighs','calves']
   }],
   weightHappiness: {
     type: String,

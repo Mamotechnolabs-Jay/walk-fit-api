@@ -78,7 +78,7 @@ const userProfileSchema = new mongoose.Schema({
   }],
   weightGainFactors: [{
     type: String,
-    enum: ['marriage_or_relationship', 'busy_work_or_family_life', 'stress_or_mental_health', 'medicine_or_hormonal_disorder', 'None_of_the_above']
+    enum: ['marriage_or_a_relationship', 'busy_work_or_family_life', 'stress_or_mental_health', 'medicine_or_hormonal_disorder', 'None_of_the_above']
   }],
   dietaryVices: [{
     type: String,

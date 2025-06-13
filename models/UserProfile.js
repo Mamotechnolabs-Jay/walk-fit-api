@@ -14,7 +14,7 @@ const userProfileSchema = new mongoose.Schema({
   },
   fitnessGoals: [{
     type: String,
-    enum: ['relieve_stress', 'improve_heart_health', 'get_outdoors', 'lose_weight', 'get_firm_and_toned']
+    enum: ['relieve_stress', 'improve_heart_health', 'get_outdoors', 'lose_weight', 'get_frim_and_toned']
   }],
   bodyType: {
     type: String,

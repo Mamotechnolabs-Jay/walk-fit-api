@@ -47,16 +47,16 @@ class WorkoutService {
         const walkingExercises = response.data.filter(exercise => {
           const name = exercise.name.toLowerCase();
           const instructions = exercise.instructions.toLowerCase();
-          
+
           // Check if it's explicitly a walking exercise
           const isWalking = (
-            name.includes('walk') || 
+            name.includes('walk') ||
             name.includes('hike') ||
             name.includes('stroll') ||
             (instructions.includes('walk') && !instructions.includes('skate')) ||
             (instructions.includes('hike') && !instructions.includes('bike'))
           );
-          
+
           // Log the decision for debugging
           console.log(`Exercise "${exercise.name}" is walking:`, isWalking, {
             name: name,
@@ -66,16 +66,16 @@ class WorkoutService {
             hasWalkInInstructions: instructions.includes('walk'),
             hasHikeInInstructions: instructions.includes('hike')
           });
-          
+
           return isWalking;
         });
 
         console.log('Number of walking exercises found:', walkingExercises.length);
-        
+
         // Return walking exercises if available, otherwise return all cardio exercises
         const exercisesToReturn = walkingExercises.length > 0 ? walkingExercises : response.data;
         console.log('Final number of exercises to return:', exercisesToReturn.length);
-        
+
         return exercisesToReturn;
       }
       console.log('No exercises found in API response');
@@ -222,17 +222,17 @@ class WorkoutService {
 
         if (response.data && response.data.length > 0) {
           // Filter for walking exercises
-          const walkingExercises = response.data.filter(exercise => 
-            exercise.name.toLowerCase().includes('walk') || 
+          const walkingExercises = response.data.filter(exercise =>
+            exercise.name.toLowerCase().includes('walk') ||
             exercise.instructions.toLowerCase().includes('walk')
           );
-          
+
           // Use walking exercises if available, otherwise use cardio exercises
           const exercisesToUse = walkingExercises.length > 0 ? walkingExercises : response.data;
-          
+
           // Create a program based on the category
           let programName, programDesc, programImage, programId;
-          
+
           if (categoryId === 'weight_loss') {
             programName = 'Walk off Weight Program';
             programDesc = 'A progressive walking program designed to help with weight loss';
@@ -249,7 +249,7 @@ class WorkoutService {
             programImage = 'lunch-walks.jpg';
             programId = 'lunch_program';
           }
-          
+
           // Create the program
           const newProgram = await WorkoutProgram.create({
             id: programId,
@@ -261,18 +261,18 @@ class WorkoutService {
             duration: 14,  // 2 weeks program
             totalWorkouts: Math.min(exercisesToUse.length, 7) // Up to 7 workouts per program
           });
-          
+
           programs.push(newProgram);
-          
+
           // Create workouts for this program using API exercises
           const maxWorkouts = Math.min(exercisesToUse.length, 7);
-          
+
           for (let i = 0; i < maxWorkouts; i++) {
             const exercise = exercisesToUse[i];
             const duration = categoryId === 'lunch_walks' ? 15 : categoryId === 'weight_loss' ? 30 : 20;
             const calories = duration * 5;
             const distance = +(duration * 0.08).toFixed(1);
-            
+
             await Workout.create({
               name: exercise.name.includes('Walk') ? exercise.name : `${exercise.name} Walking Workout`,
               description: exercise.instructions,
@@ -299,7 +299,7 @@ class WorkoutService {
         const createdProgram = await this.createFallbackProgram(categoryId);
         programs.push(createdProgram);
       }
-      
+
       return programs;
     } catch (error) {
       console.error('Error in fetchWorkoutProgramsByCategory:', error);
@@ -318,7 +318,7 @@ class WorkoutService {
       duration: 7,
       workouts: []
     };
-    
+
     if (categoryId === 'lunch_walks') {
       program = {
         id: 'lunch_program',
@@ -409,7 +409,7 @@ class WorkoutService {
         ]
       };
     }
-    
+
     // Create the program
     const newProgram = await WorkoutProgram.create({
       id: program.id,
@@ -421,7 +421,7 @@ class WorkoutService {
       duration: program.duration,
       totalWorkouts: program.workouts.length
     });
-    
+
     // Create workouts for this program
     for (const workout of program.workouts) {
       await Workout.create({
@@ -439,7 +439,7 @@ class WorkoutService {
         includesCooldown: true
       });
     }
-    
+
     return newProgram;
   }
 
@@ -484,14 +484,14 @@ class WorkoutService {
 
         if (response.data && response.data.length > 0) {
           // Filter for walking exercises
-          const walkingExercises = response.data.filter(exercise => 
-            exercise.name.toLowerCase().includes('walk') || 
+          const walkingExercises = response.data.filter(exercise =>
+            exercise.name.toLowerCase().includes('walk') ||
             exercise.instructions.toLowerCase().includes('walk')
           );
-          
+
           // Use walking exercises if available, otherwise use cardio exercises
           const exercisesToUse = walkingExercises.length > 0 ? walkingExercises : response.data;
-          
+
           // Set base workout parameters based on program
           let baseDuration, baseCalories, baseDistance;
           if (program.categoryId === 'lunch_walks') {
@@ -501,21 +501,21 @@ class WorkoutService {
           } else {
             baseDuration = 20;
           }
-          
+
           baseCalories = baseDuration * 5;
           baseDistance = +(baseDuration * 0.08).toFixed(1);
-          
+
           // Create workouts using API exercises
           const maxWorkouts = Math.min(exercisesToUse.length, 7);
-          
+
           for (let i = 0; i < maxWorkouts; i++) {
             const exercise = exercisesToUse[i];
-            
+
             // Progressively increase duration and intensity
             const duration = baseDuration + (i * 2);
             const calories = Math.round(duration * 5);
             const distance = +((duration * 0.08) + (i * 0.05)).toFixed(1);
-            
+
             const newWorkout = await Workout.create({
               name: exercise.name.includes('Walk') ? exercise.name : `${exercise.name} Walking Workout`,
               description: exercise.instructions,
@@ -530,21 +530,21 @@ class WorkoutService {
               includesWarmup: true,
               includesCooldown: true
             });
-            
+
             workouts.push(newWorkout);
           }
-          
+
           // Update program's workout count
           program.totalWorkouts = workouts.length;
           await program.save();
-          
+
           return workouts;
         } else {
           throw new Error('No exercises returned from API');
         }
       } catch (apiError) {
         console.error(`Error fetching exercises for program ${programId}:`, apiError);
-        
+
         // Create fallback workouts
         const workouts = [];
         const categoryId = program.categoryId;
@@ -552,7 +552,7 @@ class WorkoutService {
 
         for (let i = 0; i < workoutCount; i++) {
           let duration, calories, distance;
-          
+
           if (categoryId === 'lunch_walks') {
             duration = 10 + (i * 2);
             calories = duration * 3;
@@ -566,7 +566,7 @@ class WorkoutService {
             calories = duration * 4;
             distance = +(duration * 0.08).toFixed(1);
           }
-          
+
           const newWorkout = await Workout.create({
             name: `Walking Workout ${i + 1}`,
             description: `A ${duration}-minute walking workout to help you achieve your fitness goals.`,
@@ -581,14 +581,14 @@ class WorkoutService {
             includesWarmup: true,
             includesCooldown: true
           });
-          
+
           workouts.push(newWorkout);
         }
-        
+
         // Update program's workout count
         program.totalWorkouts = workouts.length;
         await program.save();
-        
+
         return workouts;
       }
     } catch (error) {
@@ -893,7 +893,7 @@ class WorkoutService {
         if (exercises.length > 0) {
           // Create program details based on ID
           let programName, programDesc, programImage, categoryId;
-          
+
           if (programId.includes('weight_loss')) {
             programName = 'Walk off Weight Program';
             programDesc = 'A progressive walking program designed to help with weight loss';
@@ -951,6 +951,21 @@ class WorkoutService {
     }
   }
 
+  async getWorkoutDetails(workoutId) {
+    try {
+      const workout = await Workout.findById(workoutId);
+
+      if (!workout) {
+        return null;
+      }
+
+      return workout;
+    } catch (error) {
+      console.error('Error fetching workout details:', error);
+      throw error;
+    }
+  }
+
   // Fetch workouts by program with user progress
   async fetchWorkoutsByProgram(programId, userId) {
     try {
@@ -967,8 +982,8 @@ class WorkoutService {
           }
 
           // Fetch exercises from Ninja API
-          const exercises = await this.fetchExercisesFromNinjaAPI({ 
-            difficulty: program.difficulty 
+          const exercises = await this.fetchExercisesFromNinjaAPI({
+            difficulty: program.difficulty
           });
 
           if (exercises.length > 0) {

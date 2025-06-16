@@ -18,9 +18,6 @@ router.put('/progress', authmiddleware, challengeController.updateDailyProgress)
 // Mark challenge as completed/failed/abandoned
 router.put('/status', authmiddleware, challengeController.markChallengeStatus);
 
-// Auto-assign challenges based on user profile
-router.post('/auto-assign', authmiddleware, challengeController.autoAssignChallenges);
-
 // Generate and assign walking challenges from API for a user
 router.post('/generate-auto-walking-challenges', authmiddleware, challengeController.generateAndAssignWalkingChallenges);
 

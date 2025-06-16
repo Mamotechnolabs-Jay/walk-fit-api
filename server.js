@@ -7,6 +7,7 @@ const chalk = require('chalk');
 const authRoutes = require('./routes/authRoutes');
 const userProfileRoutes = require('./routes/userProfileRoutes'); 
 const workoutRoutes = require('./routes/workoutRoutes'); // Import workout routes
+const challengeRoutes = require('./routes/challengeRoutes'); // Import challenge routes
 
 const app = express();
 
@@ -57,6 +58,7 @@ if (process.env.NODE_ENV !== 'production') {
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', userProfileRoutes); // Use user profile routes
 app.use('/api/workouts', workoutRoutes); // Use workout routes
+app.use('/api/challenges', challengeRoutes); // Use challenge routes
 
 
 // Error handling middleware

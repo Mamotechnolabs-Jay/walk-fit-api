@@ -954,12 +954,95 @@ class WorkoutService {
   async getWorkoutDetails(workoutId) {
     try {
       const workout = await Workout.findById(workoutId);
+      if (!workout) return null;
 
-      if (!workout) {
-        return null;
+      const workoutData = workout.toObject();
+      const segments = [];
+
+      // Fixed warmup - always 5 minutes if enabled
+      if (workout.includesWarmup) {
+        segments.push({
+          name: "WARMUP",
+          duration: 5,
+          displayTime: "5:00"
+        });
       }
 
-      return workout;
+      // The workout.duration is the TRAINING duration only
+      // Warmup and cooldown are additional fixed durations
+      const trainingDuration = workout.duration; // Use full duration for training
+
+      // For progression workouts, create alternating segments with proportional distribution
+      const trainingSegments = [];
+      if (workout.category === 'progression') {
+        // Define the pattern with ratios: moderate (40%), fast (40%), slow (20%)
+        const segmentPattern = [
+          { name: "MODERATE WALKING", ratio: 0.4 },
+          { name: "FAST WALKING", ratio: 0.4 },
+          { name: "SLOW WALKING", ratio: 0.2 }
+        ];
+
+        // Calculate how many complete cycles we can fit
+        const patternDuration = 10; // 4 + 4 + 2 = 10 minutes per cycle
+        const cycles = Math.floor(trainingDuration / patternDuration);
+        const remainingTime = trainingDuration % patternDuration;
+
+        // Add complete cycles
+        for (let cycle = 0; cycle < cycles; cycle++) {
+          segmentPattern.forEach(segment => {
+            const duration = Math.round(patternDuration * segment.ratio);
+            trainingSegments.push({
+              name: segment.name,
+              duration: duration,
+              displayTime: `${duration}:00`
+            });
+          });
+        }
+
+        // Distribute remaining time proportionally
+        if (remainingTime > 0) {
+          segmentPattern.forEach(segment => {
+            const duration = Math.round(remainingTime * segment.ratio);
+            if (duration > 0) {
+              trainingSegments.push({
+                name: segment.name,
+                duration: duration,
+                displayTime: `${duration}:00`
+              });
+            }
+          });
+        }
+      }
+      // Add other workout types as needed
+      else if (workout.intensity === 'moderate') {
+        trainingSegments.push({
+          name: "MODERATE WALKING",
+          duration: trainingDuration,
+          displayTime: `${trainingDuration}:00`
+        });
+      }
+
+      // Add the TRAINING segment with its sub-segments
+      segments.push({
+        name: "TRAINING",
+        duration: trainingDuration,
+        displayTime: `${trainingDuration}:00`,
+        segments: trainingSegments
+      });
+
+      // Fixed cooldown - always 5 minutes if enabled
+      if (workout.includesCooldown) {
+        segments.push({
+          name: "COOLDOWN",
+          duration: 5,
+          displayTime: "5:00"
+        });
+      }
+
+      return {
+        ...workoutData,
+        segments: segments
+      };
     } catch (error) {
       console.error('Error fetching workout details:', error);
       throw error;

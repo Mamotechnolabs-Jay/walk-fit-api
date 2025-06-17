@@ -69,7 +69,7 @@ exports.autoAssignChallenges = async (req, res) => {
   }
 };
 
-// POST generate and assign walking challenges for a user (auto-generate from API)
+// POST generate and assign walking challenges for a user (static challenges)
 exports.generateAndAssignWalkingChallenges = async (req, res) => {
   try {
     const userId = req.user._id;

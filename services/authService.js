@@ -104,9 +104,92 @@ exports.loginUser = async (email, password) => {
   return user;
 };
 
-// Add this new function to get user by ID for token generation
 exports.getUserById = async (userId) => {
   const user = await User.findById(userId);
   if (!user) throw new Error('User not found');
+  return user;
+};
+
+// Google Authentication Processing
+exports.processGoogleAuth = async (userData) => {
+  const { googleId, name, email, profilePicture } = userData;
+  
+  // First check if user exists with this googleId
+  let user = await User.findOne({ googleId });
+  
+  // If not found by googleId, try to find by email
+  if (!user && email) {
+    user = await User.findOne({ email });
+    
+    // If user exists but doesn't have googleId, link the accounts
+    if (user) {
+      user.googleId = googleId;
+      user.isVerified = true; // Ensure user is marked as verified
+      
+      // Update profile picture if not already set
+      if (!user.profilePicture && profilePicture) {
+        user.profilePicture = profilePicture;
+      }
+      
+      await user.save();
+    }
+  }
+  
+  // If still no user found, create a new one
+  if (!user) {
+    user = new User({
+      name: name || 'Google User',
+      email: email || `${googleId}@gmail.com`,
+      googleId,
+      isVerified: true,
+      verificationMethod: 'google',
+      profilePicture: profilePicture || ''
+    });
+    
+    await user.save();
+  }
+  
+  return user;
+};
+
+// Facebook Authentication Processing
+exports.processFacebookAuth = async (userData) => {
+  const { facebookId, name, email, profilePicture } = userData;
+  
+  // First check if user exists with this facebookId
+  let user = await User.findOne({ facebookId });
+  
+  // If not found by facebookId, try to find by email
+  if (!user && email) {
+    user = await User.findOne({ email });
+    
+    // If user exists but doesn't have facebookId, link the accounts
+    if (user) {
+      user.facebookId = facebookId;
+      user.isVerified = true; // Ensure user is marked as verified
+      
+      // Update profile picture if not already set
+      if (!user.profilePicture && profilePicture) {
+        user.profilePicture = profilePicture;
+      }
+      
+      await user.save();
+    }
+  }
+  
+  // If still no user found, create a new one
+  if (!user) {
+    user = new User({
+      name: name || 'Facebook User',
+      email: email || `${facebookId}@facebook.com`,
+      facebookId,
+      isVerified: true,
+      verificationMethod: 'facebook',
+      profilePicture: profilePicture || ''
+    });
+    
+    await user.save();
+  }
+  
   return user;
 };

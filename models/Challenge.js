@@ -15,9 +15,9 @@ const challengeSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  type: {
+ type: {
     type: String,
-    enum: ['daily_steps', 'weekly_steps', 'monthly_steps', 'workout_streak', 'distance', 'calories', 'active_minutes'],
+    enum: ['steps', 'distance', 'duration', 'streak', 'workout', 'unique_workouts', 'daily_steps', 'workout_streak', 'daily_duration', 'total_distance'],
     required: true
   },
   duration: {

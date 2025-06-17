@@ -1,7 +1,6 @@
 const Challenge = require('../models/Challenge');
 const UserChallengeEnrollment = require('../models/UserChallengeEnrollement');
 const UserProfile = require('../models/UserProfile');
-const WorkoutService = require('./workoutService');
 
 class ChallengeService {
   // Get all available challenges
@@ -104,21 +103,17 @@ class ChallengeService {
     return results;
   }
 
-  // Generate and assign walking challenges for a user based on API exercises
+  // Generate and assign walking challenges for a user (static version)
   async generateAndAssignWalkingChallenges(userId) {
-    // 1. Fetch walking exercises from the workout service (which uses third-party APIs)
-    const walkingExercises = await WorkoutService.fetchExercisesFromNinjaAPI();
-    if (!walkingExercises || walkingExercises.length === 0) {
-      throw new Error('No walking exercises found from API');
-    }
-
-    // 2. Define challenge templates (daily, weekly, monthly)
+    // Define static challenge templates (daily, weekly, monthly)
     const challengeTemplates = [
       {
-        duration: 7,
+        challengeId: 'workout_streak-7',
         name: '7-Day Walking Workout Streak',
         description: 'Do a walking workout every day for 7 days.',
         type: 'workout_streak',
+        duration: 7,
+        durationLabel: '7 day',
         difficulty: 'medium',
         targetValue: 1, // 1 workout per day
         targetLabel: '1 walking workout daily',
@@ -127,10 +122,12 @@ class ChallengeService {
         backgroundColor: '#4CAF50',
       },
       {
-        duration: 28,
+        challengeId: 'daily_steps-28',
         name: '28-Day Step Challenge',
         description: 'Walk at least 10,000 steps daily for 28 days.',
         type: 'daily_steps',
+        duration: 28,
+        durationLabel: '28 day',
         difficulty: 'hard',
         targetValue: 10000,
         targetLabel: '10,000 steps daily',
@@ -139,54 +136,73 @@ class ChallengeService {
         backgroundColor: '#FFD700',
       },
       {
-        duration: 7,
+        challengeId: 'unique_workouts-7',
         name: 'Variety Walker',
         description: 'Complete 5 different walking exercises this week.',
         type: 'unique_workouts',
+        duration: 7,
+        durationLabel: '7 day',
         difficulty: 'medium',
         targetValue: 5,
         targetLabel: '5 unique walking workouts',
         reward: 'Bronze Medal',
         iconType: 'star',
         backgroundColor: '#FF6B47',
+      },
+      {
+        challengeId: 'beginner-3',
+        name: 'Beginner Walker',
+        description: 'Walk for at least 15 minutes each day for 3 days.',
+        type: 'daily_duration',
+        duration: 3,
+        durationLabel: '3 day',
+        difficulty: 'easy',
+        targetValue: 15, // 15 minutes per day
+        targetLabel: '15 minutes daily',
+        reward: 'Starter Badge',
+        iconType: 'badge',
+        backgroundColor: '#2196F3',
+      },
+      {
+        challengeId: 'distance-14',
+        name: 'Distance Challenger',
+        description: 'Walk a total of 30km over 14 days.',
+        type: 'total_distance',
+        duration: 14,
+        durationLabel: '14 day',
+        difficulty: 'medium',
+        targetValue: 30, // 30km total
+        targetLabel: '30km total distance',
+        reward: 'Distance Master Badge',
+        iconType: 'badge',
+        backgroundColor: '#9C27B0',
       }
     ];
 
-    // 3. For each template, create a challenge (if not exists) and enroll user
+    // For each template, create a challenge (if not exists) and enroll user
     const results = [];
     for (const template of challengeTemplates) {
-      // Use exercise names to make challengeId unique and dynamic
-      let challengeId = `${template.type}-${template.duration}`;
-      if (template.type === 'unique_workouts') {
-        // Use the first 5 exercise names for uniqueness
-        const names = walkingExercises.slice(0, 5).map(e => e.name.replace(/\s+/g, '-').toLowerCase()).join('-');
-        challengeId += `-${names}`;
-      }
       // Check if challenge exists
-      let challenge = await Challenge.findOne({ challengeId });
+      let challenge = await Challenge.findOne({ challengeId: template.challengeId });
       if (!challenge) {
         challenge = await Challenge.create({
-          challengeId,
-          name: template.name,
-          description: template.description,
-          type: template.type,
-          duration: template.duration,
-          durationLabel: `${template.duration} day`,
-          difficulty: template.difficulty,
-          targetValue: template.targetValue,
-          targetLabel: template.targetLabel,
-          reward: template.reward,
+          ...template,
           imageUrl: '',
-          backgroundColor: template.backgroundColor,
-          iconType: template.iconType,
           isActive: true
         });
       }
+      
       // Enroll user if not already enrolled
-      const existing = await UserChallengeEnrollment.findOne({ userId, challenge: challenge._id, status: 'active' });
+      const existing = await UserChallengeEnrollment.findOne({ 
+        userId, 
+        challenge: challenge._id, 
+        status: 'active' 
+      });
+      
       if (!existing) {
         const startDate = new Date();
         const endDate = new Date(startDate.getTime() + (challenge.duration - 1) * 24 * 60 * 60 * 1000);
+        
         const dailyProgress = Array.from({ length: challenge.duration }, (_, i) => ({
           day: i + 1,
           date: new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000),
@@ -195,6 +211,7 @@ class ChallengeService {
           isCompleted: false,
           completedAt: null
         }));
+        
         const enrollment = await UserChallengeEnrollment.create({
           userId,
           challenge: challenge._id,
@@ -202,11 +219,13 @@ class ChallengeService {
           endDate,
           dailyProgress
         });
+        
         results.push(enrollment);
       } else {
         results.push(existing);
       }
     }
+    
     return results;
   }
 }

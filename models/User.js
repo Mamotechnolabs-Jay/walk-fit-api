@@ -16,12 +16,18 @@ const userSchema = new mongoose.Schema({
   },
   mobile: {
     type: String,
-    required: true,
+    // Only required for traditional signup
+    required: function() {
+      return !this.googleId && !this.facebookId;
+    },
     trim: true
   },
   password: {
     type: String,
-    required: true
+    // Only required for traditional signup
+    required: function() {
+      return !this.googleId && !this.facebookId;
+    }
   },
   isVerified: {
     type: Boolean,
@@ -29,16 +35,34 @@ const userSchema = new mongoose.Schema({
   },
   verificationMethod: {
     type: String,
-    enum: ['email', 'sms'],
+    enum: ['email', 'sms', 'google', 'facebook'],
     default: 'email'
   },
   verificationCode: String,
-  verificationExpires: Date
+  verificationExpires: Date,
+  
+  // OAuth fields
+  googleId: {
+    type: String,
+    sparse: true,
+    unique: true
+  },
+  facebookId: {
+    type: String,
+    sparse: true,
+    unique: true
+  },
+  
+  // Profile data
+  profilePicture: String,
+  
 }, { timestamps: true });
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
+  // Only hash the password if it exists and was modified
+  if (!this.password || !this.isModified('password')) return next();
+  
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -50,6 +74,8 @@ userSchema.pre('save', async function(next) {
 
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword) {
+  // If no password (OAuth user), always return false
+  if (!this.password) return false;
   return bcrypt.compare(candidatePassword, this.password);
 };
 
